@@ -31,33 +31,32 @@ Bot = commands.Bot(
 
 Bot.warnings = {}
 
+for guild in Bot.guilds:
+    Bot.warnings[guild.id] = {}
+    
+    with aiofiles.open(f"warnings/{guild.id}.txt", mode="a") as temp:
+        pass
+
+    with aiofiles.open(f"warnings/{guild.id}.txt", mode="r") as file:
+        lines = file.readlines()
+
+        for line in lines:
+            data = line.split(" ")
+            member_id = int(data[0])
+            admin_id = int(data[1])
+            pointintime = int(data[2])
+            reason = " ".join(data[3:]).strip("\n")
+
+            try:
+                Bot.warnings[guild.id][member_id][0] += 1
+                Bot.warnings[guild.id][member_id][1].append((admin_id, pointintime, reason))
+
+            except KeyError:
+                Bot.warnings[guild.id][member_id] = [1, [(admin_id, pointintime, reason)]] 
+
 
 @Bot.event
 async def on_ready():
-    
-    for guild in Bot.guilds:
-        Bot.warnings[guild.id] = {}
-        
-        async with aiofiles.open(f"warnings/{guild.id}.txt", mode="a") as temp:
-            pass
-
-        async with aiofiles.open(f"warnings/{guild.id}.txt", mode="r") as file:
-            lines = await file.readlines()
-
-            for line in lines:
-                data = line.split(" ")
-                member_id = int(data[0])
-                admin_id = int(data[1])
-                pointintime = int(data[2])
-                reason = " ".join(data[3:]).strip("\n")
-
-                try:
-                    Bot.warnings[guild.id][member_id][0] += 1
-                    Bot.warnings[guild.id][member_id][1].append((admin_id, pointintime, reason))
-
-                except KeyError:
-                    Bot.warnings[guild.id][member_id] = [1, [(admin_id, pointintime, reason)]] 
-    
     
     print(f'{Bot.user} has connected to Discord! It is '+ str(datetime.now()))
     
@@ -96,29 +95,37 @@ async def on_member_remove(member):
         )
         embed.set_thumbnail(url=member.avatar.url)
         await Bot.get_channel(1062759135445258331).send(embed=embed)
-
+       
 @Bot.event
 async def on_message(message):
+    if message.channel.id == 1062759156928483358 and message.author.id != 1062793673680629820: # ID des Channels in dem Autodeletet werden soll
+        newmsg = message.id
+        async for msg in message.channel.history(limit=1000):
+                # If the message was written by me and is not a system message
+                if msg.id != newmsg and msg.type == disnake.MessageType.default:
+                    #counter += 1
+                    #print("*", end="", flush=True)
+                    await msg.delete()
+
     if not message.author.bot:
-        if message.content == "hallo" or "hi" or "moin" or "hey":
+        if "hallo" in message.content.lower() or "moin" in message.content.lower() or message.content.lower() == "hey" or message.content.lower() == "hi":
             await message.channel.send("Moin!", reference=message)
-            
-@Bot.event
-async def on_message(message):
-  if message.channel.id == 1062759156928483358 and message.author.id != 1062793673680629820: # ID des Channels in dem Autodeletet werden soll
-    newmsg = message.id
-    async for msg in message.channel.history(limit=1000):
-            # If the message was written by me and is not a system message
-            if msg.id != newmsg and msg.type == disnake.MessageType.default:
-                #counter += 1
-                #print("*", end="", flush=True)
-                await msg.delete()
-    #currenttime = datetime
-    #time.sleep(1)
-    #await message.channel.purge(limit=100, before=currenttime)
-    #await message.delete()
-  #await Bot.process_commands(message)
-
+        if "was geht" in message.content.lower() or "wie gehts" in message.content.lower() or "wie geht's" in message.content.lower():
+            await message.channel.send("Mir geht's super, und dir so?", reference=message)
+        if "thx " in message.content.lower() or "thanks" in message.content.lower() or "danke" in message.content.lower() or message.content.lower() == "thx":
+            await message.channel.send("Kein Ding Bro", reference=message)
+        if "bot " in message.content.lower():
+            await message.channel.send("Was willst du von mir", reference=message)
+        if "banana" in message.content.lower() or "penis" in message.content.lower() or "pimmel" in message.content.lower():
+            await message.add_reaction(emoji="🍌")
+        if message.content.lower().endswith("lmao") or message.content.lower().endswith("lol") or message.content.lower().endswith("rofl") or message.content.lower().endswith("/j") or message.content.lower().endswith("/s") or message.content.lower().endswith("haha"):
+            await message.add_reaction(emoji=":HahaSoFunny:1063118214848073830")
+        if "car" in message.content.lower() or "karre" in message.content.lower():
+            await message.add_reaction(emoji=":FQQD_Toyota:1063118186628792350")
+        if "coca cola espuma" in message.content.lower():
+            await message.add_reaction(emoji="💥")
+        if message.content.lower() == "gut" or "toll" in message.content.lower() or "nice" == message.content.lower() or "hervorragend" in message.content.lower():
+            await message.add_reaction(emoji=":VeryGood:1063136458476638218")
 
 @moderation.sub_command(name="ban", description="Ban a member")
 @commands.has_permissions(ban_members=True)
